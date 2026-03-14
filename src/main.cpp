@@ -70,7 +70,9 @@ int main(int argc, char* argv[]) {
         std::unique_ptr<SandboxManager> sandbox = std::make_unique<SandboxManager>();
         std::unique_ptr<CommandManager> cmdManager = std::make_unique<CommandManager>(sandbox.get());
 
+        sandbox->loadState("data/save.dat");
         int exitCode = cmdManager->executeCommand(execCommand);
+        sandbox->saveState("data/save.dat");
         return exitCode;
     }
 

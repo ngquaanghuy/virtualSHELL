@@ -329,8 +329,8 @@ bool VirtualFileSystem::isEmpty(const std::string& path) const {
 }
 
 void VirtualFileSystem::serializeNode(FileNode* node, std::ofstream& out, int depth) {
-    std::string indent(depth * 2, ' ');
-    out << indent << (node->isDirectory ? "DIR" : "FILE") << "|" << node->name << "|";
+    out << std::string(depth * 2, ' ');
+    out << (node->isDirectory ? "DIR" : "FILE") << "|" << node->name << "|";
     out << node->permissions << "|" << node->size << "|" << node->modifiedTime << "|";
 
     if (!node->isDirectory) {
@@ -395,6 +395,7 @@ VirtualFileSystem::FileNode* VirtualFileSystem::deserializeNode(std::ifstream& i
 bool VirtualFileSystem::loadFromFile(const std::string& filepath) {
     std::ifstream in(filepath, std::ios::binary);
     if (!in.is_open()) {
+        std::cerr << "VFS: Cannot open file: " << filepath << "\n";
         return false;
     }
 
@@ -402,19 +403,76 @@ bool VirtualFileSystem::loadFromFile(const std::string& filepath) {
     std::getline(in, header);
 
     if (header != "VIRTUALFS_V1") {
+        std::cerr << "VFS: Invalid header: " << header << "\n";
         in.close();
         return false;
     }
 
-    // Rebuild from file
+    std::cerr << "VFS: Loading from " << filepath << "\n";
+
     delete root;
     root = new FileNode("/", true, nullptr);
     currentDir = root;
     root->parent = root;
 
-    // Simplified: just mark as loaded
-    in.close();
+    std::vector<FileNode*> stack;
+    stack.push_back(root);
 
+    std::string line;
+    while (std::getline(in, line)) {
+        if (line.empty()) continue;
+        
+        int depth = 0;
+        while (line.length() > 0 && line[0] == ' ') {
+            depth++;
+            line.erase(line.begin());
+        }
+        depth /= 2;
+
+        while ((int)stack.size() > depth + 1) {
+            stack.pop_back();
+        }
+
+        if (stack.empty()) continue;
+
+        size_t pos = 0;
+        std::vector<std::string> parts;
+        while ((pos = line.find('|')) != std::string::npos) {
+            parts.push_back(line.substr(0, pos));
+            line.erase(0, pos + 1);
+        }
+        if (!line.empty()) parts.push_back(line);
+
+        if (parts.size() < 5) continue;
+
+        bool isDir = (parts[0] == "DIR");
+        std::string name = parts[1];
+        std::string perms = parts[2];
+        std::string content = parts.size() > 4 ? parts[4] : "";
+
+        if (name.empty() || name == "/") continue;
+
+        FileNode* parent = stack.back();
+
+        FileNode* node = new FileNode(name, isDir, parent);
+        node->permissions = perms;
+        if (!isDir) {
+            node->content = content;
+            node->size = content.size();
+        }
+
+        parent->children.push_back(node);
+
+        if (isDir) {
+            stack.push_back(node);
+        }
+    }
+
+    in.close();
+    std::cerr << "VFS: Loaded, root has " << root->children.size() << " children\n";
+    for (auto c : root->children) {
+        std::cerr << "VFS:   - " << c->name << " (dir=" << c->isDirectory << ")\n";
+    }
     Logger::log(Logger::Level::SUCCESS, "Virtual filesystem loaded from " + filepath);
     return true;
 }

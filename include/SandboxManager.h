@@ -4,7 +4,9 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 #include "VirtualFileSystem.h"
+#include "ConfigManager.h"
 
 class SandboxManager {
 public:
@@ -19,10 +21,11 @@ public:
         std::string value;
     };
 
-    SandboxManager();
+    SandboxManager(const std::string& configPath = "shell.conf");
     ~SandboxManager();
 
     VirtualFileSystem* getFileSystem();
+    ConfigManager* getConfigManager();
 
     void addToHistory(const std::string& command, int exitCode = 0);
     std::vector<HistoryEntry> getHistory(int limit = 100) const;
@@ -58,6 +61,7 @@ public:
 
 private:
     VirtualFileSystem* vfs;
+    ConfigManager* configManager;
     std::vector<HistoryEntry> history;
     std::map<std::string, std::string> envVars;
     std::map<std::string, std::string> aliases;
@@ -69,6 +73,7 @@ private:
 
     void initializeDefaultEnv();
     std::string getCurrentTimestamp();
+    void loadConfig(const std::string& configPath);
 };
 
 #endif

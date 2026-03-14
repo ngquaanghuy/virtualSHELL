@@ -1,0 +1,18 @@
+VIRTUALFS_V1
+DIR|/|drwxr-xr-x|0|2026-03-14 10:30:05|
+  DIR|home|drwxr-xr-x|0|2026-03-14 10:30:05|
+    DIR|user|drwxr-xr-x|0|2026-03-14 10:30:05|
+      DIR|bin|drwxr-xr-x|0|2026-03-14 10:30:05|
+        DIR|etc|drwxr-xr-x|0|2026-03-14 10:30:05|
+          FILE|passwd|-rw-r--r--|19|2026-03-14 10:30:05|2026-03-14 10:29:34
+          FILE|hostname|-rw-r--r--|19|2026-03-14 10:30:05|2026-03-14 10:29:34
+          FILE|motd|-rw-r--r--|19|2026-03-14 10:30:05|2026-03-14 10:29:34
+          DIR|var|drwxr-xr-x|0|2026-03-14 10:30:05|
+            DIR|tmp|drwxr-xr-x|0|2026-03-14 10:30:05|
+              DIR|root|drwxr-xr-x|0|2026-03-14 10:30:05|
+                DIR|usr|drwxr-xr-x|0|2026-03-14 10:30:05|
+                  DIR|bin|drwxr-xr-x|0|2026-03-14 10:30:05|
+                    DIR|lib|drwxr-xr-x|0|2026-03-14 10:30:05|
+                      DIR|newtest|drwxr-xr-x|0|2026-03-14 10:30:05|
+        DIR|testdir|drwxr-xr-x|0|2026-03-14 10:30:05|
+  DIR|a|drwxr-xr-x|0|2026-03-14 10:30:08|

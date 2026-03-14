@@ -4,16 +4,41 @@
 #include <sstream>
 #include <algorithm>
 
-SandboxManager::SandboxManager() : vfs(nullptr), lastExitCode(0) {
+SandboxManager::SandboxManager(const std::string& configPath) 
+    : vfs(nullptr), configManager(nullptr), lastExitCode(0) {
+    
+    configManager = new ConfigManager();
+    configManager->loadFromFile(configPath);
+
+    ConfigManager::UserConfig userCfg = configManager->getUserConfig();
+    ConfigManager::LoggingConfig logCfg = configManager->getLoggingConfig();
+
+    currentUser = userCfg.username;
+    hostname = userCfg.hostname;
+    workingDirectory = userCfg.home;
+
+    Logger::setVerbose(logCfg.verbose);
+
     vfs = new VirtualFileSystem();
-    currentUser = "user";
-    hostname = "virtualshell";
-    workingDirectory = "/home/user";
+
+    ConfigManager::SandboxConfig sandCfg = configManager->getSandboxConfig();
+    if (sandCfg.auto_save) {
+        vfs->loadFromFile(sandCfg.data_file + ".vfs");
+    }
+
+    auto fsCfg = configManager->getFilesystemConfig();
+    auto cmdCfg = configManager->getCommandsConfig();
+
+    for (const auto& alias : cmdCfg.default_aliases) {
+        aliases[alias.first] = alias.second;
+    }
+
     initializeDefaultEnv();
 }
 
 SandboxManager::~SandboxManager() {
     delete vfs;
+    delete configManager;
 }
 
 void SandboxManager::initializeDefaultEnv() {
@@ -46,6 +71,10 @@ std::string SandboxManager::getCurrentTimestamp() {
 
 VirtualFileSystem* SandboxManager::getFileSystem() {
     return vfs;
+}
+
+ConfigManager* SandboxManager::getConfigManager() {
+    return configManager;
 }
 
 void SandboxManager::addToHistory(const std::string& command, int exitCode) {
@@ -208,9 +237,9 @@ bool SandboxManager::loadState(const std::string& filepath) {
     std::string vfsFile = filepath + ".vfs";
     if (vfs) {
         vfs->loadFromFile(vfsFile);
+        vfs->changeDirectory(workingDirectory);
     }
 
-    workingDirectory = envVars["PWD"];
     Logger::log(Logger::Level::SUCCESS, "Sandbox state loaded from " + filepath);
     return true;
 }
